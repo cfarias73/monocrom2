@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { VisualSocketClient } from './lib/wsClient'
 import { GameBridge } from './game/GameBridge'
 import { CollisionEditor } from './components/CollisionEditor'
+import { SettingsModal } from './components/SettingsModal'
 import { registerTestRunner } from './game/test/eventTestRunner'
 import type { AgentInfo, EmployeeDetailPayload, OrgCreateMemberInput, OrgSavedCreatePayload, OrgEmployee, OrgInfoPayload, OrgRole, ReorgProposalInfo, SavedOrgSummary, SocketStatus, TalentTemplate, VisualSnapshot } from './types/visual'
 import { useBoardStore, type BoardStoreState } from './kanban/BoardStore'
@@ -31,6 +32,9 @@ import { EventTimelineStore } from './devtools/EventTimelineStore'
 import { DevToolsOverlay } from './devtools/DevToolsOverlay'
 import { useExternalTeamActivityStore, type ExternalTeamActivityRecord } from './stores/ExternalTeamActivityStore'
 import { isJiuwenOpaqueTeam } from './lib/externalTeamActivity'
+import { AuthProvider } from './context/AuthContext'
+import { AuthGate } from './components/AuthGate'
+import { UserAccountPill } from './components/UserAccountPill'
 
 function readOutdoorOverrideUi(): 'auto' | 'day' | 'night' {
   try {
@@ -486,7 +490,7 @@ function MaybeExecutionPanel({ taskId, projectId, sessions, agents, getExternalT
   )
 }
 
-export default function App() {
+function AppInner() {
   const { locale, setLocale, t } = useI18n()
   const bridgeRef = useRef(new GameBridge())
   useMemo(() => registerTestRunner(bridgeRef.current), [])
@@ -511,6 +515,19 @@ export default function App() {
     return next
   }), [])
   const [activePage, setActivePage] = useState<AppPage>('workspace')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [showApiKeyBanner, setShowApiKeyBanner] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/config/llm')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.has_api_key) {
+          setShowApiKeyBanner(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
   const [swarmAgents, setSwarmAgents] = useState<AgentInfo[]>([])
   const [showDevTools, setShowDevTools] = useState(false)
   const [lastTaskDoneAgent, setLastTaskDoneAgent] = useState<string | null>(null)
@@ -2439,7 +2456,7 @@ export default function App() {
       {/* Topbar */}
       <header className="topbar">
         <div className="topbar-left">
-          <span className="logo-text">Open<span className="logo-accent">OPC</span></span>
+          <span className="logo-text">Mono<span className="logo-accent">Crom</span></span>
           <div className={`conn-dot ${statusClass(status)}`} title={`${status}${statusDetail ? ` — ${statusDetail}` : ''}\n${wsUrl}`} />
           <ProjectSelector
             projects={projectStore.projects}
@@ -2477,6 +2494,15 @@ export default function App() {
           <div className="language-toggle" role="group" aria-label={t('language.label')} title={t('language.label')}>
             <button
               type="button"
+              data-locale="es"
+              aria-pressed={locale === 'es'}
+              className={`language-toggle-btn${locale === 'es' ? ' active' : ''}`}
+              onClick={() => setLocale('es')}
+            >
+              {t('language.spanish')}
+            </button>
+            <button
+              type="button"
               data-locale="en"
               aria-pressed={locale === 'en'}
               className={`language-toggle-btn${locale === 'en' ? ' active' : ''}`}
@@ -2484,16 +2510,17 @@ export default function App() {
             >
               {t('language.english')}
             </button>
-            <button
-              type="button"
-              data-locale="zh-CN"
-              aria-pressed={locale === 'zh-CN'}
-              className={`language-toggle-btn${locale === 'zh-CN' ? ' active' : ''}`}
-              onClick={() => setLocale('zh-CN')}
-            >
-              {t('language.chinese')}
-            </button>
           </div>
+          <button
+            type="button"
+            className="theme-select"
+            onClick={() => setSettingsOpen(true)}
+            title={t('settings.title')}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontWeight: 500 }}
+          >
+            <span>⚙️</span> {t('settings.button')}
+          </button>
+          <UserAccountPill />
           <select
             className="theme-select"
             value={outdoorOverride}
@@ -2541,6 +2568,65 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* Onboarding Banner if no API key is set */}
+      {showApiKeyBanner && (
+        <div
+          className="api-key-onboarding-banner"
+          style={{
+            background: '#282018',
+            borderBottom: '1px solid #784518',
+            color: '#fef3c7',
+            padding: '10px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            zIndex: 40,
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '16px' }}>🔑</span>
+            <span style={{ fontWeight: 500 }}>{t('onboarding.noApiKey')}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              style={{
+                background: '#e5a93c',
+                color: '#181614',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '5px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                transition: 'opacity 0.15s',
+              }}
+            >
+              {t('onboarding.configureBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowApiKeyBanner(false)}
+              style={{
+                background: 'transparent',
+                color: '#a1a1aa',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                padding: '2px 6px',
+              }}
+              title={t('onboarding.dismiss')}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Workspace Page (unified Chat + Kanban) */}
       {activePage === 'workspace' && (
@@ -2793,6 +2879,22 @@ export default function App() {
           setExecutionPanelRuntimeOnly(false)
         }}
       />
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSaved={() => setShowApiKeyBanner(false)}
+      />
     </div>
   )
 }
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate>
+        <AppInner />
+      </AuthGate>
+    </AuthProvider>
+  )
+}
+

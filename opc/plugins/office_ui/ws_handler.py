@@ -101,6 +101,19 @@ from opc.plugins.office_ui.org_architecture_snapshot import (
 )
 
 
+def _friendly_error_message(exc: Any) -> str:
+    raw = str(exc)
+    raw_lower = raw.lower()
+    if "authentication" in raw_lower or "api key" in raw_lower or "invalid_api_key" in raw_lower or "unauthorized" in raw_lower:
+        return f"Error de autenticación: La clave API de IA no es válida o no está configurada. Ve a '⚙️ Ajustes' en la barra superior para configurarla.\n\nDetalles técnicos: {raw}"
+    if "rate limit" in raw_lower or "quota" in raw_lower or "too many requests" in raw_lower or "429" in raw_lower:
+        return f"Límite de peticiones o saldo agotado en el proveedor de IA. Espera unos momentos o revisa tus créditos.\n\nDetalles técnicos: {raw}"
+    if "context window" in raw_lower or "context length" in raw_lower or "prompt is too long" in raw_lower:
+        return f"La conversación excede la ventana de contexto del modelo. Te sugerimos iniciar un nuevo chat para continuar con contexto limpio.\n\nDetalles técnicos: {raw}"
+    return f"Error: {raw}"
+
+
+
 def _add_execution_turn_aliases(
     payload: dict[str, Any],
     runtime_task_id: Any | None = None,
@@ -6952,8 +6965,8 @@ class WSHandler:
                             msg = await self.chat_store.insert_message(
                                 channel_id=channel_id,
                                 sender="system",
-                                sender_name="OPC",
-                                content=f"Error: {exc}",
+                                sender_name="MonoCrom",
+                                content=_friendly_error_message(exc),
                                 project_id=pid,
                             )
                             await self.broadcast({"type": "session_message", "payload": msg})
@@ -7454,8 +7467,8 @@ class WSHandler:
                 msg = await self.chat_store.insert_message(
                     channel_id=channel_id,
                     sender="system",
-                    sender_name="OPC",
-                    content=f"Error: {e}",
+                    sender_name="MonoCrom",
+                    content=_friendly_error_message(e),
                     project_id=pid,
                 )
                 await self.broadcast({"type": "session_message", "payload": msg})

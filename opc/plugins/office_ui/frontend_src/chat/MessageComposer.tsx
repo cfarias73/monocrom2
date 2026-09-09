@@ -16,6 +16,7 @@ import type { NativeApprovalLevel, TaskPreferredAgent } from '../types/kanban'
 import type { SavedOrgSummary } from '../types/visual'
 import { getContextUsageMetrics } from '../lib/contextUsage'
 import { TASK_AGENT_LABELS } from '../lib/externalAgents'
+import { useI18n } from '../i18n'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const MAX_TOTAL_SIZE = 20 * 1024 * 1024
@@ -238,14 +239,14 @@ function savedOrgLabel(org: SavedOrgSummary): string {
 }
 
 export function MessageComposer({
-  disabled,
-  placeholder,
+  disabled = false,
+  placeholder = 'Message...',
   channelId,
-  execMode,
-  companyProfile,
+  execMode = 'task',
+  companyProfile = 'corporate',
   taskPreferredAgent = 'native',
   nativeApprovalLevel,
-  nativeApprovalDefault,
+  nativeApprovalDefault = 'auto',
   agentStatus,
   currentTool,
   displayTool,
@@ -256,10 +257,10 @@ export function MessageComposer({
   contextTokens,
   contextWindow,
   contextRemainingPct,
-  savedOrgs,
+  savedOrgs = [],
   activeSavedOrg,
   selectedOrgId,
-  lockedMode = false,
+  lockedMode,
   onSend,
   onModeChange,
   onTaskAgentChange,
@@ -269,7 +270,8 @@ export function MessageComposer({
   onSavedOrgLoad,
   onStop,
   onContinueInNewChat,
-}: MessageComposerProps) {
+}: MessageComposerProps): ReactElement {
+  const { t } = useI18n()
   const [text, setText] = useState(() => (channelId && composerDrafts.get(channelId)) || '')
   const [focused, setFocused] = useState(false)
   const [pending, setPending] = useState<PendingAttachment[]>([])
@@ -610,9 +612,9 @@ export function MessageComposer({
                   <label
                     className="composer-mode-inline"
                     data-kind="mode"
-                    title="Execution mode for this chat and new work started from it"
+                    title={t('composer.mode.label')}
                   >
-                    <span className="composer-mode-inline-label">Mode</span>
+                    <span className="composer-mode-inline-label">{t('composer.mode.label')}</span>
                     <span className="composer-mode-select-wrap">
                       <select
                         className="composer-mode-select"
@@ -629,9 +631,10 @@ export function MessageComposer({
                         onPointerDown={() => onSavedOrgsRefresh?.()}
                         disabled={disabled}
                         aria-label="Execution mode"
+                        title={selectedModeOption === 'task' ? t('composer.mode.taskHint') : t('composer.mode.companyHint')}
                       >
-                        <option value="task">Task</option>
-                        <option value="company">Company</option>
+                        <option value="task" title={t('composer.mode.taskHint')}>{t('composer.mode.task')}</option>
+                        <option value="company" title={t('composer.mode.companyHint')}>{t('composer.mode.company')}</option>
                       </select>
                     </span>
                   </label>
@@ -649,17 +652,16 @@ export function MessageComposer({
                     <span className="composer-mode-chip-label">{modeLabel}</span>
                     <div className="composer-mode-chip-popover" role="dialog" aria-label="Mode info">
                       <div className="composer-mode-chip-popover-title">
-                        Mode is fixed for this chat
+                        {t('composer.mode.fixedTooltip')}
                       </div>
                       <div className="composer-mode-chip-popover-body">
-                        Once the first message is sent, this chat is committed to{' '}
-                        <strong>{modeLabel}</strong>.
+                        {t('composer.mode.fixedDescription', { mode: modeLabel })}
                       </div>
                       {onContinueInNewChat && continueAlternatives.length > 0 && (
                         <>
                           <div className="composer-mode-chip-popover-divider" aria-hidden="true" />
                           <div className="composer-mode-chip-popover-action-title">
-                            Continue in a new chat
+                            {t('composer.mode.continueInNew')}
                           </div>
                           <div className="composer-mode-chip-popover-actions">
                             {continueAlternatives.map(alt => (
@@ -700,9 +702,9 @@ export function MessageComposer({
                     <label
                       className="composer-mode-inline"
                       data-kind="org"
-                      title="Company architecture for this chat"
+                      title={t('composer.mode.companyArchitecture')}
                     >
-                      <span className="composer-mode-inline-label">Company</span>
+                      <span className="composer-mode-inline-label">{t('composer.mode.companyArchitecture')}</span>
                       <span className="composer-mode-select-wrap">
                         <select
                           className="composer-mode-select"
@@ -751,9 +753,9 @@ export function MessageComposer({
                       <label
                         className="composer-mode-inline"
                         data-kind="agent"
-                        title="Execution agent for this task-mode chat"
+                        title={t('composer.mode.agent')}
                       >
-                        <span className="composer-mode-inline-label">Agent</span>
+                        <span className="composer-mode-inline-label">{t('composer.mode.agent')}</span>
                         <span className="composer-mode-select-wrap">
                           <select
                             className="composer-mode-select"

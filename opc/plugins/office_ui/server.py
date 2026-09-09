@@ -168,6 +168,10 @@ async def create_app(
     # ── Routes ────────────────────────────────────────────────────────
     app.router.add_get("/ws", ws_handler.handle_ws)
 
+    # LLM config endpoints
+    app.router.add_get("/api/config/llm", _make_llm_config_get_handler(engine))
+    app.router.add_post("/api/config/llm", _make_llm_config_post_handler(engine))
+
     # Attachment download (must be registered before the SPA catch-all)
     app.router.add_get(
         "/api/attachments/{attachment_id}/{filename}",
@@ -240,6 +244,101 @@ def _make_attachment_handler(engine: OPCEngine):
         headers = {"Cache-Control": "public, max-age=86400"}
         return aiohttp.web.FileResponse(file_path, headers=headers)
 
+    return _handle
+
+
+def _make_llm_config_get_handler(engine: OPCEngine):
+    async def _handle(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        import yaml
+        opc_home = engine.opc_home
+        cfg_path = opc_home / "config" / "llm_config.yaml"
+        data = {}
+        if cfg_path.is_file():
+            try:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    loaded = yaml.safe_load(f) or {}
+                    data = loaded.get("llm", {}) or {}
+            except Exception:
+                data = {}
+
+        llm_cfg = getattr(engine.config, "llm", None)
+        default_model = data.get("default_model") or (getattr(llm_cfg, "default_model", None) if llm_cfg else "openai/gpt-4o")
+        api_key = data.get("api_key") or (getattr(llm_cfg, "api_key", "") if llm_cfg else "") or os.environ.get("OPENAI_API_KEY", "") or os.environ.get("OPENROUTER_API_KEY", "") or os.environ.get("ANTHROPIC_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "") or os.environ.get("DEEPSEEK_API_KEY", "")
+        api_base = data.get("api_base") or (getattr(llm_cfg, "api_base", "") if llm_cfg else "") or ""
+        temperature = data.get("temperature", 0.7)
+
+        masked_key = ""
+        if api_key:
+            if len(api_key) > 8:
+                masked_key = f"{api_key[:4]}...{api_key[-4:]}"
+            else:
+                masked_key = "********"
+
+        return aiohttp.web.json_response({
+            "default_model": default_model,
+            "has_api_key": bool(api_key),
+            "api_key_masked": masked_key,
+            "api_base": api_base,
+            "temperature": temperature,
+        })
+    return _handle
+
+
+def _make_llm_config_post_handler(engine: OPCEngine):
+    async def _handle(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        import yaml
+        from opc.core.config import _atomic_write_yaml
+        try:
+            body = await request.json()
+        except Exception:
+            return aiohttp.web.json_response({"error": "Invalid JSON body"}, status=400)
+
+        opc_home = engine.opc_home
+        cfg_path = opc_home / "config" / "llm_config.yaml"
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+
+        existing = {}
+        if cfg_path.is_file():
+            try:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    existing = yaml.safe_load(f) or {}
+            except Exception:
+                existing = {}
+
+        llm_dict = existing.get("llm", {}) or {}
+        if "default_model" in body and body["default_model"]:
+            llm_dict["default_model"] = str(body["default_model"]).strip()
+        if "api_key" in body and body["api_key"]:
+            llm_dict["api_key"] = str(body["api_key"]).strip()
+        if "api_base" in body:
+            base = str(body["api_base"]).strip()
+            if base:
+                llm_dict["api_base"] = base
+            elif "api_base" in llm_dict:
+                del llm_dict["api_base"]
+        if "temperature" in body:
+            try:
+                llm_dict["temperature"] = float(body["temperature"])
+            except (ValueError, TypeError):
+                pass
+
+        existing["llm"] = llm_dict
+        _atomic_write_yaml(cfg_path, existing)
+
+        try:
+            if hasattr(engine.config, "llm") and engine.config.llm:
+                if "default_model" in llm_dict:
+                    engine.config.llm.default_model = llm_dict["default_model"]
+                if "api_key" in llm_dict:
+                    engine.config.llm.api_key = llm_dict["api_key"]
+                if "api_base" in llm_dict:
+                    engine.config.llm.api_base = llm_dict["api_base"]
+                if "temperature" in llm_dict:
+                    engine.config.llm.temperature = llm_dict["temperature"]
+        except Exception as ex:
+            logger.warning(f"Could not hot-reload LLM engine config: {ex}")
+
+        return aiohttp.web.json_response({"success": True, "message": "LLM config saved"})
     return _handle
 
 

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Monocrom — Tu Empresa de Uno</title>
+  <meta name="description" content="Monocrom es el sistema de orquestación para tu Empresa de Uno. Define roles, contrata agentes autónomos de IA y déjalos colaborar localmente con memoria continua y control total." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-warm-dark">
+  <!-- Subtle tactile noise overlay -->
+  <div class="grain-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <span class="brand-glyph">✦</span>
+        <span class="brand-title">Monocrom</span>
+        <span class="brand-tag">v2.0 • Local</span>
+      </a>
+      <div class="nav-menu">
+        <a href="#filosofia">Filosofía</a>
+        <a href="#arquitectura">Organización</a>
+        <a href="#casos">Casos de Uso</a>
+        <a href="#instalacion">Instalación</a>
+        <a href="#faq">Preguntas</a>
+      </div>
+      <div class="nav-actions">
+        <a href="http://localhost:8765" target="_blank" class="btn-terminal">
+          <span>●</span> ABRIR CONSOLA LOCAL
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container hero-layout">
+      <div class="hero-header">
+        <div class="hero-eyebrow font-crt">
+          <span class="status-indicator"></span>
+          SISTEMA DE ORQUESTACIÓN AUTÓNOMO PARA CREADORES Y FUNDADORES
+        </div>
+        <h1 class="hero-headline">
+          Crea Tu <span class="font-accent">Empresa</span> de Uno.
+        </h1>
+        <p class="hero-desc">
+          Tienes ideas que antes requerían diez personas para ejecutarse. Ahora solo te necesitas a ti mismo como Director, respaldado por un equipo de agentes de IA locales que coordinan, desarrollan, revisan y operan en sincronía.
+        </p>
+      </div>
+
+      <!-- CRT Installation Terminal -->
+      <div class="terminal-wrapper" id="instalacion">
+        <div class="crt-bezel">
+          <div class="crt-screen">
+            <div class="crt-scanline"></div>
+            <div class="crt-header">
+              <div class="crt-title font-crt">MONOCROM OS // WORKSPACE RUNTIME [LOCAL-FIRST]</div>
+              <div class="platform-selector">
+                <button class="plat-btn active" data-platform="mac" id="btn-mac">macOS / Linux</button>
+                <button class="plat-btn" data-platform="win" id="btn-win">Windows PS</button>
+              </div>
+            </div>
+
+            <div class="crt-body">
+              <div class="crt-ascii font-crt">
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓  [OWNER: DIRECTOR] ───► [PROYECTO: RUNTIME] ───► [KANBAN: OK]  ▓
+▓  ROLES ACTIVOS: 4  │ MEMORIA LOCAL: ACTIVA  │ APIS: CONECTADAS ▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+              </div>
+
+              <div class="command-row">
+                <div class="command-prompt">
+                  <span class="prompt-sym font-mono" id="prompt-sym">$</span>
+                  <span class="command-text font-mono" id="cmd-text">curl -fsSL https://monocrom.app/install.sh | bash</span>
+                </div>
+                <button class="btn-copy font-mono" id="copy-btn">
+                  <span id="copy-icon">⎘</span>
+                  <span id="copy-label">COPIAR</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="crt-footer font-mono">
+              <span>● 100% DATOS EN TU MÁQUINA</span>
+              <span>● CHROMA VECTOR DB LOCAL</span>
+              <span>● SQLITE AUDITABLE</span>
+              <span>● BYOK (OPENAI/CLAUDE/OLLAMA)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filosofía & Principios -->
+  <section class="section" id="filosofia">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="label-number font-mono">01 // PRINCIPIOS</span>
+        <h2 class="section-heading">Diseñado para la Autonomía Real</h2>
+        <p class="section-sub">
+          Monocrom no es una ventana de chat ni un juguete de respuestas rápidas. Es un entorno de trabajo formal donde cada rol tiene responsabilidades, jerarquías y herramientas de ejecución.
+        </p>
+      </div>
+
+      <div class="grid-cards">
+        <div class="card card-matte">
+          <div class="card-num font-crt">I.</div>
+          <h3 class="card-title">Estructura Organizacional</h3>
+          <p class="card-desc">
+            Tú defines el organigrama. El Director general delega subtareas a los especialistas de desarrollo, diseño y QA, quienes se coordinan entre sí mediante protocolos de traspaso (handoff) y revisión mutua.
+          </p>
+          <div class="card-tag font-mono">MULTI-AGENT COLLABORATION</div>
+        </div>
+
+        <div class="card card-matte">
+          <div class="card-num font-crt">II.</div>
+          <h3 class="card-title">Memoria y Aprendizaje Local</h3>
+          <p class="card-desc">
+            Bases de datos vectoriales (ChromaDB) y relacionales (SQLite) en tu propio disco duro. Tus agentes recuerdan decisiones de semanas pasadas, estilos de código y contextos sin enviar tus datos a la nube.
+          </p>
+          <div class="card-tag font-mono">100% LOCAL PRIVACY</div>
+        </div>
+
+        <div class="card card-matte">
+          <div class="card-num font-crt">III.</div>
+          <h3 class="card-title">Navegación y Herramientas Reales</h3>
+          <p class="card-desc">
+            Los agentes no solo devuelven texto; abren navegadores reales con Playwright, extraen datos web en vivo, ejecutan scripts de terminal, compilan código y generan documentos de Office (.docx, .xlsx, .pptx).
+          </p>
+          <div class="card-tag font-mono">BROWSER & SHELL RUNTIME</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Casos de Uso Interactivos -->
+  <section class="section section-darker" id="casos">
+    <div class="container">
+      <div class="section-title-wrap text-center">
+        <span class="label-number font-mono">02 // EN ACCIÓN</span>
+        <h2 class="section-heading">Casos Reales Resueltos por tus Agentes</h2>
+        <p class="section-sub mx-auto">
+          Mira cómo un objetivo enviado a tu empresa virtual se transforma en entregables finalizados.
+        </p>
+      </div>
+
+      <div class="usecase-container">
+        <div class="usecase-nav font-mono">
+          <button class="usecase-tab active" data-usecase="software">
+            <span class="tab-bullet">■</span> 01. Desarrollo de Software
+          </button>
+          <button class="usecase-tab" data-usecase="marketing">
+            <span class="tab-bullet">□</span> 02. Campaña de Marketing
+          </button>
+          <button class="usecase-tab" data-usecase="analisis">
+            <span class="tab-bullet">□</span> 03. Análisis de Mercado
+          </button>
+          <button class="usecase-tab" data-usecase="soporte">
+            <span class="tab-bullet">□</span> 04. Soporte y Correo 24/7
+          </button>
+        </div>
+
+        <div class="usecase-display card-matte">
+          <div class="usecase-content" id="uc-content">
+            <div class="uc-header font-mono">
+              <span class="uc-badge">OBJETIVO: "Construir API REST con autenticación JWT y tests"</span>
+              <span class="uc-time">TURNO: 1 • 3 AGENTES EN EJECUCIÓN</span>
+            </div>
+            <div class="uc-chat-stream font-mono">
+              <div class="chat-row chat-director">
+                <span class="chat-agent">👑 [DIRECTOR]:</span> "Arquitecto, prepara la estructura del proyecto y define contratos de endpoints."
+              </div>
+              <div class="chat-row chat-dev">
+                <span class="chat-agent">👨‍💻 [DEV AGENT]:</span> "Escribiendo endpoints en Python FastAPI. Creando modelos Pydantic y base SQLite..."
+              </div>
+              <div class="chat-row chat-qa">
+                <span class="chat-agent">🔍 [QA AGENT]:</span> "Ejecutando suite pytest. 14/14 tests aprobados. Generando reporte de cobertura..."
+              </div>
+              <div class="chat-row chat-status">
+                <span class="status-pill">✓ TAREA COMPLETADA</span> Archivos guardados en tu espacio local <code>_workplace/api_auth/</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Arquitectura / Organigrama -->
+  <section class="section" id="arquitectura">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="label-number font-mono">03 // ARQUITECTURA</span>
+        <h2 class="section-heading">Una Oficina Viva en 2D</h2>
+        <p class="section-sub">
+          Supervisa el estado de cada colaborador en el tablero Kanban o en la vista espacial interactiva con sprites pixel-art.
+        </p>
+      </div>
+
+      <div class="office-preview card-matte">
+        <div class="office-preview-header font-mono">
+          <div class="dot-indicators">
+            <span class="dot dot-r"></span>
+            <span class="dot dot-y"></span>
+            <span class="dot dot-g"></span>
+          </div>
+          <div class="office-tabs">
+            <span class="active-tab">VISTA OFICINA [PIXEL CANVAS]</span>
+            <span>TABLERO KANBAN</span>
+            <span>ORGANIGRAMA (ORG)</span>
+          </div>
+          <span class="office-port">HTTP://LOCALHOST:8765</span>
+        </div>
+
+        <div class="office-canvas-mock">
+          <div class="office-room">
+            <div class="desk-station">
+              <div class="station-role font-mono">DIRECTOR (TÚ)</div>
+              <div class="station-icon">👑</div>
+              <div class="station-status font-mono">ESTADO: ASIGNANDO METAS</div>
+            </div>
+            <div class="station-divider font-crt">──►</div>
+            <div class="desk-station">
+              <div class="station-role font-mono">GERENTE DE PROYECTO</div>
+              <div class="station-icon">👔</div>
+              <div class="station-status font-mono">ESTADO: DESCOMPONIENDO SUBTAREAS</div>
+            </div>
+            <div class="station-divider font-crt">──►</div>
+            <div class="desk-station">
+              <div class="station-role font-mono">DESARROLLADOR</div>
+              <div class="station-icon">💻</div>
+              <div class="station-status font-mono">ESTADO: EJECUTANDO HERRAMIENTAS</div>
+            </div>
+            <div class="station-divider font-crt">──►</div>
+            <div class="desk-station">
+              <div class="station-role font-mono">CONTROL DE CALIDAD</div>
+              <div class="station-icon">🧪</div>
+              <div class="station-status font-mono">ESTADO: REVISIÓN DE CÓDIGO</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section-darker" id="faq">
+    <div class="container">
+      <div class="section-title-wrap text-center">
+        <span class="label-number font-mono">04 // TRANSPARENCIA</span>
+        <h2 class="section-heading">Preguntas Frecuentes</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-card card-matte">
+          <button class="faq-toggle font-heading">
+            <span>¿Cómo funciona el modelo "Local-First"?</span>
+            <span class="faq-icon font-mono">+</span>
+          </button>
+          <div class="faq-body">
+            <p>
+              Toda la infraestructura de Monocrom se ejecuta en tu computadora: base de datos SQLite, memoria vectorial ChromaDB, navegador Playwright y archivos generados. Nada de tu código, chats o documentos se envía a nuestros servidores. Solo las llamadas a las APIs de IA (OpenAI, Claude, etc.) viajan a los proveedores que tú elijas.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-card card-matte">
+          <button class="faq-toggle font-heading">
+            <span>¿Puedo usar modelos gratuitos o sin tarjeta de crédito?</span>
+            <span class="faq-icon font-mono">+</span>
+          </button>
+          <div class="faq-body">
+            <p>
+              Sí. Monocrom cuenta con soporte nativo para <strong>Ollama</strong> y <strong>vLLM</strong>. Puedes correr modelos locales como Llama 3.3, Mistral o DeepSeek directamente en tu hardware sin costo por token.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-card card-matte">
+          <button class="faq-toggle font-heading">
+            <span>¿Cómo se comunican los agentes entre sí?</span>
+            <span class="faq-icon font-mono">+</span>
+          </button>
+          <div class="faq-body">
+            <p>
+              Monocrom incluye un protocolo de colaboración multi-agente. Cuando un rol directivo asigna una tarea, el sistema genera subtareas en el tablero Kanban y envía las dependencias a los especialistas. Los agentes se pasan resultados intermedios, realizan revisiones entre pares (Peer Review) y sólo marcan la tarea como completada cuando el revisor la aprueba.
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-card card-matte">
+          <button class="faq-toggle font-heading">
+            <span>¿Qué canales externos puedo conectar?</span>
+            <span class="faq-icon font-mono">+</span>
+          </button>
+          <div class="faq-body">
+            <p>
+              Monocrom incluye adaptadores para correo electrónico (IMAP/SMTP), WhatsApp, Telegram, Slack, Discord y el estándar abierto MCP (Model Context Protocol) para conectar cualquier base de datos o API corporativa.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer CTA -->
+  <footer class="footer">
+    <div class="container footer-layout text-center">
+      <div class="footer-badge font-mono">EMPRESA DE UNO // COMIENZA HOY</div>
+      <h2 class="footer-title">Construye tu Futuro Autónomo</h2>
+      <p class="footer-desc">
+        Únete a la beta privada o instala Monocrom en tu máquina en 30 segundos con tus propias claves de IA.
+      </p>
+
+      <div class="beta-signup-card card-matte" style="max-width: 460px; margin: 24px auto; padding: 20px; border: 1px solid rgba(229,169,60,0.3); border-radius: 8px; text-align: left;">
+        <div class="font-mono" style="font-size: 11px; color: #e5a93c; margin-bottom: 8px;">ACCESO A LA BETA PRIVADA // SUPABASE AUTH</div>
+        <form id="landing-beta-form" style="display: flex; gap: 8px; flex-direction: column;">
+          <input 
+            type="email" 
+            id="landing-email-input" 
+            placeholder="tu@correo.com" 
+            required 
+            style="background: #141210; border: 1px solid #36312a; border-radius: 6px; padding: 10px 14px; color: #f3efe9; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none;"
+          />
+          <button 
+            type="submit" 
+            id="landing-submit-btn" 
+            class="btn-primary font-mono" 
+            style="padding: 12px; text-align: center; justify-content: center; cursor: pointer;"
+          >
+            ✉️ SOLICITAR INVITACIÓN / ACCESO
+          </button>
+        </form>
+        <div id="landing-beta-msg" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px 12px; border-radius: 6px;"></div>
+      </div>
+
+      <div class="footer-actions">
+        <a href="#instalacion" class="btn-primary font-mono">⚡ VER COMANDO DE INSTALACIÓN</a>
+        <a href="http://localhost:8765" target="_blank" class="btn-ghost font-mono">CONSOLA LOCAL (8765) ↗</a>
+      </div>
+      <div class="footer-bottom font-mono">
+        <span>© 2026 MONOCROM // LOCAL-FIRST MULTI-AGENT ORCHESTRATION</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>
