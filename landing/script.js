@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyIcon = document.getElementById('copy-icon')
 
   const COMMANDS = {
-    mac: 'curl -fsSL https://raw.githubusercontent.com/cfarias73/monocrom2/main/landing/install.sh | bash',
-    win: 'irm https://raw.githubusercontent.com/cfarias73/monocrom2/main/landing/install.ps1 | iex',
+    mac: 'curl -fsSL https://monocrom.carlosfarias73.workers.dev/install.sh | bash',
+    win: 'irm https://monocrom.carlosfarias73.workers.dev/install.ps1 | iex',
   }
 
   function setPlatform(plat) {
