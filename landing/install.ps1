@@ -64,9 +64,13 @@ Write-Host "✅ ¡Instalación completada con éxito!" -ForegroundColor Green
 Write-Host "🚀 Iniciando Monocrom en http://localhost:8765..." -ForegroundColor Cyan
 Write-Host ""
 
-# 6. Abrir navegador
-Start-Process "http://localhost:8765"
+# 6. Abrir navegador en segundo plano tras inicializar el servidor
+Start-Job -ScriptBlock {
+    Start-Sleep -Seconds 4
+    Start-Process "http://localhost:8765"
+} | Out-Null
 
 # 7. Ejecutar Monocrom
 uv run opc ui --port 8765
+
 
