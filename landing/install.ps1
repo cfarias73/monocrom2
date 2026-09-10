@@ -40,13 +40,33 @@ try {
     Write-Host "Aviso: la instalación de Chromium continuará en segundo plano." -ForegroundColor Yellow
 }
 
+# 5. Crear acceso directo en el Escritorio
+try {
+    $WshShell = New-Object -ComObject WScript.Shell
+    $DesktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
+    
+    $BatPath = "$InstallDir\Iniciar_MonoCrom.bat"
+    Set-Content -Path $BatPath -Value "@echo off`ntitle MonoCrom Console`ncd /d `"%USERPROFILE%\Monocrom`"`nstart http://localhost:8765`nuv run opc ui --port 8765`npause"
+    
+    $ShortcutPath = "$DesktopPath\MonoCrom.lnk"
+    $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+    $Shortcut.TargetPath = "$InstallDir\Iniciar_MonoCrom.bat"
+    $Shortcut.WorkingDirectory = $InstallDir
+    $Shortcut.Description = "Iniciar MonoCrom - Tu Empresa de Uno"
+    $Shortcut.Save()
+    Write-Host "📌 Acceso directo 'MonoCrom' creado en tu Escritorio." -ForegroundColor Green
+} catch {
+    # Continuar si hay restricción de permisos
+}
+
 Write-Host ""
 Write-Host "✅ ¡Instalación completada con éxito!" -ForegroundColor Green
 Write-Host "🚀 Iniciando Monocrom en http://localhost:8765..." -ForegroundColor Cyan
 Write-Host ""
 
-# 5. Abrir navegador
+# 6. Abrir navegador
 Start-Process "http://localhost:8765"
 
-# 6. Ejecutar Monocrom
+# 7. Ejecutar Monocrom
 uv run opc ui --port 8765
+

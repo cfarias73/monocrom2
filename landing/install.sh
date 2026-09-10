@@ -48,8 +48,21 @@ uv run playwright install chromium || true
 echo -e "\n${GREEN}${BOLD}✅ ¡Instalación completada con éxito!${RESET}"
 echo -e "${CYAN}🚀 Iniciando Monocrom en http://localhost:8765...${RESET}\n"
 
-# 5. Abrir navegador en segundo plano tras arrancar
+# 5. Crear lanzador en el Escritorio
+if [ -d "${HOME}/Desktop" ]; then
+  LAUNCHER="${HOME}/Desktop/MonoCrom.command"
+  cat << 'EOF' > "$LAUNCHER"
+#!/usr/bin/env bash
+cd "${HOME}/Monocrom"
+(sleep 2 && (open http://localhost:8765 2>/dev/null || xdg-open http://localhost:8765 2>/dev/null || true)) &
+uv run opc ui --port 8765
+EOF
+  chmod +x "$LAUNCHER"
+  echo -e "${GREEN}📌 Lanzador 'MonoCrom.command' creado en tu Escritorio.${RESET}"
+fi
+
+# 6. Abrir navegador en segundo plano tras arrancar
 (sleep 2 && (open http://localhost:8765 2>/dev/null || xdg-open http://localhost:8765 2>/dev/null || true)) &
 
-# 6. Ejecutar Monocrom
+# 7. Ejecutar Monocrom
 uv run opc ui --port 8765
