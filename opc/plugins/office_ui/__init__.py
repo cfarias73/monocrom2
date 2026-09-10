@@ -45,8 +45,23 @@ def _latest_mtime(root: Path, *, exclude_dirs: set[str] | None = None) -> float:
 
 
 def _frontend_needs_rebuild() -> bool:
+    # If dist is missing or empty → must build
     if not _FRONTEND_DIST.is_dir() or not any(_FRONTEND_DIST.iterdir()):
         return True
+
+    # If dist has a valid index.html the build already exists (e.g. committed to git).
+    # Only trigger a rebuild when the developer has node_modules available AND src is
+    # newer than dist — this avoids crashing on end-user machines that don't have npm.
+    dist_index = _FRONTEND_DIST / "index.html"
+    if not dist_index.exists():
+        return True  # Partial / corrupted dist
+
+    node_modules = _FRONTEND_SRC / "node_modules"
+    if not node_modules.is_dir():
+        # npm was never run in this environment → cannot rebuild even if src is newer.
+        # Trust the committed/pre-built dist and skip rebuild.
+        return False
+
     latest_src = _latest_mtime(_FRONTEND_SRC, exclude_dirs={"node_modules"})
     latest_dist = _latest_mtime(_FRONTEND_DIST)
     return latest_src > latest_dist
