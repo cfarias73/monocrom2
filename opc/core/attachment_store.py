@@ -34,8 +34,8 @@ ALLOWED_EXTENSIONS = {
     ".docx", ".xlsx", ".pptx",
     ".mp4", ".mpeg", ".mpg", ".mov", ".webm",
 }
-MAX_FILE_SIZE = 10 * 1024 * 1024       # 10 MB per file
-MAX_TOTAL_SIZE = 20 * 1024 * 1024      # 20 MB per message
+MAX_FILE_SIZE = 50 * 1024 * 1024       # 50 MB per file
+MAX_TOTAL_SIZE = 100 * 1024 * 1024     # 100 MB per message
 
 ALLOWED_MIME_TYPES = {
     "video/mp4",
