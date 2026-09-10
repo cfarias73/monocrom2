@@ -17,14 +17,36 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     $env:Path = "$HOME\.cargo\bin;$HOME\.local\bin;$env:Path"
 }
 
-# 2. Descargar o actualizar repositorio
+# 2. Descargar o actualizar repositorio (compatible con o sin Git)
 if (Test-Path $InstallDir) {
     Write-Host "🔄 Actualizando Monocrom en $InstallDir..." -ForegroundColor Cyan
     Set-Location $InstallDir
-    git pull
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        git pull
+    }
 } else {
     Write-Host "📥 Descargando Monocrom en $InstallDir..." -ForegroundColor Cyan
-    git clone https://github.com/cfarias73/monocrom2.git $InstallDir
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        git clone https://github.com/cfarias73/monocrom2.git $InstallDir
+    } else {
+        Write-Host "📦 Descargando paquete oficial (sin requerir Git)..." -ForegroundColor Cyan
+        $ZipUrl = "https://github.com/cfarias73/monocrom2/archive/refs/heads/main.zip"
+        $TempZip = "$env:TEMP\monocrom_installer.zip"
+        $TempExtract = "$env:TEMP\monocrom_extracted"
+        
+        if (Test-Path $TempExtract) { Remove-Item $TempExtract -Recurse -Force -ErrorAction SilentlyContinue }
+        
+        Invoke-WebRequest -Uri $ZipUrl -OutFile $TempZip -UseBasicParsing
+        Expand-Archive -Path $TempZip -DestinationPath $TempExtract -Force
+        
+        $ExtractedFolder = Get-ChildItem -Path $TempExtract | Select-Object -First 1
+        if ($ExtractedFolder) {
+            Move-Item -Path $ExtractedFolder.FullName -Destination $InstallDir -Force
+        }
+        
+        Remove-Item -Path $TempZip -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $TempExtract -Recurse -Force -ErrorAction SilentlyContinue
+    }
     Set-Location $InstallDir
 }
 

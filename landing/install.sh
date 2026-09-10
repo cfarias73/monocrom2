@@ -26,14 +26,22 @@ if ! command -v uv &> /dev/null; then
   export PATH="${HOME}/.cargo/bin:${HOME}/.local/bin:${PATH}"
 fi
 
-# 2. Descargar o actualizar Monocrom
+# 2. Descargar o actualizar Monocrom (compatible con o sin Git)
 if [ -d "$INSTALL_DIR" ]; then
   echo -e "${CYAN}🔄 Actualizando Monocrom en ${INSTALL_DIR}...${RESET}"
   cd "$INSTALL_DIR"
-  git pull || true
+  if command -v git &> /dev/null; then git pull || true; fi
 else
   echo -e "${CYAN}📥 Descargando Monocrom en ${INSTALL_DIR}...${RESET}"
-  git clone https://github.com/cfarias73/monocrom2.git "$INSTALL_DIR"
+  if command -v git &> /dev/null; then
+    git clone https://github.com/cfarias73/monocrom2.git "$INSTALL_DIR"
+  else
+    echo -e "${CYAN}📦 Descargando paquete oficial (sin requerir Git)...${RESET}"
+    mkdir -p /tmp/monocrom_extracted
+    curl -fsSL https://github.com/cfarias73/monocrom2/archive/refs/heads/main.tar.gz | tar -xz -C /tmp/monocrom_extracted
+    mv /tmp/monocrom_extracted/monocrom2-main "$INSTALL_DIR"
+    rm -rf /tmp/monocrom_extracted
+  fi
   cd "$INSTALL_DIR"
 fi
 
