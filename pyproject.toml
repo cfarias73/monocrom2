@@ -28,7 +28,11 @@ dependencies = [
     "python-docx>=1.1.0",
     "openpyxl>=3.1.0",
     "python-pptx>=0.6.21",
+    # onnxruntime >1.16.3 dropped macOS x86_64 (Intel) wheels.
+    # Pin to <=1.16.3 on Intel Macs so chromadb works out of the box.
+    "onnxruntime<=1.16.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
 ]
+
 
 [project.optional-dependencies]
 # Backwards-compatible alias: browser tools are now native and the dependency
