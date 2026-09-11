@@ -18,8 +18,8 @@ import { getContextUsageMetrics } from '../lib/contextUsage'
 import { TASK_AGENT_LABELS } from '../lib/externalAgents'
 import { useI18n } from '../i18n'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024
-const MAX_TOTAL_SIZE = 20 * 1024 * 1024
+const MAX_FILE_SIZE = 50 * 1024 * 1024
+const MAX_TOTAL_SIZE = 100 * 1024 * 1024
 const ACCEPTED_TYPES = 'image/*,video/mp4,video/mpeg,video/quicktime,video/webm,.mp4,.mpeg,.mpg,.mov,.webm,.txt,.md,.pdf,.csv,.json,.yaml,.yml,.py,.js,.ts,.tsx,.jsx,.html,.css,.java,.c,.cpp,.go,.rs,.rb,.sh,.xml,.toml,.docx,.xlsx,.pptx'
 
 type AttachmentTransferState = 'reading' | 'ready' | 'error'
@@ -359,7 +359,7 @@ export function MessageComposer({
     const newPending: PendingAttachment[] = arr.map(file => {
       let error: string | undefined
       if (file.size > MAX_FILE_SIZE) error = `Too large (${formatSize(file.size)})`
-      else if (runningTotal + file.size > MAX_TOTAL_SIZE) error = 'Total size exceeds 20MB'
+      else if (runningTotal + file.size > MAX_TOTAL_SIZE) error = 'Total size exceeds 100MB'
       else runningTotal += file.size
 
       return {
