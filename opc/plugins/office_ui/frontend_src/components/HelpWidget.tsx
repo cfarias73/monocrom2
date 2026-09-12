@@ -127,14 +127,30 @@ export function HelpWidget() {
           </div>
         </div>
       )}
-
       <button
         className={`hw-fab ${open ? 'hw-fab--open' : ''}`}
         onClick={() => setOpen(v => !v)}
         aria-label="Abrir asistente MonoCrom"
         title="Mono — Asistente experto MonoCrom"
       >
-        {open ? '✕' : '?'}
+        {open ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        ) : (
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Robot/AI agent face */}
+            <rect x="8" y="14" width="32" height="26" rx="7" fill="white" fillOpacity="0.15" stroke="white" strokeWidth="2"/>
+            <rect x="15" y="21" width="6" height="6" rx="2" fill="white"/>
+            <rect x="27" y="21" width="6" height="6" rx="2" fill="white"/>
+            <path d="M17 33 Q24 37 31 33" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            <line x1="24" y1="14" x2="24" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="24" cy="7" r="2.5" fill="white"/>
+            <line x1="8" y1="26" x2="4" y2="26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="40" y1="26" x2="44" y2="26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        )}
       </button>
     </div>
   )
