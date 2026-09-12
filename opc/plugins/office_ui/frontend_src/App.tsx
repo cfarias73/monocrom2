@@ -36,6 +36,7 @@ import { AuthProvider } from './context/AuthContext'
 import { AuthGate } from './components/AuthGate'
 import { UserAccountPill } from './components/UserAccountPill'
 import { HelpWidget } from './components/HelpWidget'
+import { BusinessPage } from './components/BusinessPage'
 
 function readOutdoorOverrideUi(): 'auto' | 'day' | 'night' {
   try {
@@ -75,7 +76,7 @@ const SESSION_DETAIL_REFRESH_LOW_VALUE_RUNTIME_EVENTS = new Set([
   'member_inbox_updated',
 ])
 
-type AppPage = 'office' | 'workspace' | 'org' | 'mapEditor'
+type AppPage = 'office' | 'workspace' | 'org' | 'mapEditor' | 'business'
 type AppExecMode = 'task' | 'company' | 'org'
 
 function defaultWsUrl(): string {
@@ -2484,6 +2485,7 @@ function AppInner() {
             </button>
             <button className={`page-nav-btn${activePage === 'office' ? ' active' : ''}`} onClick={() => setActivePage('office')}>{t('app.page.office')}</button>
             <button className={`page-nav-btn${activePage === 'org' ? ' active' : ''}`} onClick={() => setActivePage('org')}>{t('app.page.org')}</button>
+            <button className={`page-nav-btn${activePage === 'business' ? ' active' : ''}`} onClick={() => setActivePage('business')}>🧩 Empresa</button>
           </div>
           <div className="stat-chips">
             <span className="stat-chip"><b>{metrics.totalAgents}</b> {t('app.metric.agents')}</span>
@@ -2837,6 +2839,12 @@ function AppInner() {
       {activePage === 'mapEditor' && (
         <div className="editor-page">
           <CollisionEditor bridge={bridgeRef.current} />
+        </div>
+      )}
+
+      {activePage === 'business' && (
+        <div className="business-page">
+          <BusinessPage />
         </div>
       )}
 

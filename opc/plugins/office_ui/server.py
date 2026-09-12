@@ -181,6 +181,12 @@ async def create_app(
     # Mono — Help assistant widget
     app.router.add_post("/api/help", _make_help_handler(engine))
 
+    # Business Canvas — BMC + Job Descriptions/KPIs
+    app.router.add_get("/api/config/bmc", _make_config_get_handler(engine, "business_model.json"))
+    app.router.add_post("/api/config/bmc", _make_config_post_handler(engine, "business_model.json"))
+    app.router.add_get("/api/config/jobs", _make_config_get_handler(engine, "job_descriptions.json"))
+    app.router.add_post("/api/config/jobs", _make_config_post_handler(engine, "job_descriptions.json"))
+
     # SPA: serve static files, fallback to index.html
     if _STATIC_DIR.is_dir():
         app.router.add_get("/", _serve_index)
@@ -198,6 +204,52 @@ async def create_app(
 
 
 # ── Route handlers ────────────────────────────────────────────────────
+
+# ── Business Canvas config helpers ────────────────────────────────────────
+
+def _make_config_get_handler(engine: OPCEngine, filename: str):
+    """Generic GET handler: reads a JSON config file from .opc/config/."""
+
+    async def _handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        import json
+        opc_home = getattr(engine, "opc_home", None) or get_opc_home()
+        cfg_path = Path(opc_home) / "config" / filename
+        if cfg_path.exists():
+            try:
+                data = json.loads(cfg_path.read_text(encoding="utf-8"))
+                return aiohttp.web.json_response(data)
+            except Exception as exc:
+                logger.warning(f"Could not read {filename}: {exc}")
+        return aiohttp.web.json_response({})
+
+    return _handler
+
+
+def _make_config_post_handler(engine: OPCEngine, filename: str):
+    """Generic POST handler: writes a JSON config file to .opc/config/."""
+
+    async def _handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        import json
+        try:
+            body = await request.json()
+        except Exception:
+            return aiohttp.web.Response(status=400, text="Invalid JSON")
+
+        opc_home = getattr(engine, "opc_home", None) or get_opc_home()
+        cfg_dir = Path(opc_home) / "config"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        cfg_path = cfg_dir / filename
+        try:
+            cfg_path.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding="utf-8")
+            logger.info(f"Saved business config: {filename}")
+        except Exception as exc:
+            logger.error(f"Could not save {filename}: {exc}")
+            return aiohttp.web.Response(status=500, text=str(exc))
+
+        return aiohttp.web.json_response({"ok": True})
+
+    return _handler
+
 
 _HELP_SYSTEM_PROMPT = """\
 Eres **Mono**, el asistente experto oficial de MonoCrom. Respondes SOLO preguntas sobre MonoCrom.
