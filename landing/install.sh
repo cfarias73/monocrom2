@@ -49,9 +49,17 @@ fi
 echo -e "${CYAN}🔒 Configurando espacio de trabajo local...${RESET}"
 uv run opc trust add "$INSTALL_DIR"
 
-# 4. Instalar motor de navegación web (Chromium)
+# 4. Instalar motor de navegación web (Chromium) — OPCIONAL
 echo -e "${CYAN}🌐 Verificando motor de navegación web autónomo (Playwright Chromium)...${RESET}"
-uv run playwright install chromium || true
+if uv run playwright install chromium 2>/dev/null; then
+  echo -e "${GREEN}✅ Playwright Chromium instalado correctamente.${RESET}"
+else
+  echo -e ""
+  echo -e "${ORANGE}⚠️  Playwright (navegación web autónoma) no pudo instalarse.${RESET}"
+  echo -e "${RESET}   MonoCrom funcionará normalmente. Solo la herramienta 'navegar web'${RESET}"
+  echo -e "${RESET}   quedará desactivada en este equipo.${RESET}"
+  echo -e ""
+fi
 
 echo -e "\n${GREEN}${BOLD}✅ ¡Instalación completada con éxito!${RESET}"
 echo -e "${CYAN}🚀 Iniciando Monocrom en http://localhost:8765...${RESET}\n"
@@ -69,8 +77,9 @@ EOF
   echo -e "${GREEN}📌 Lanzador 'MonoCrom.command' creado en tu Escritorio.${RESET}"
 fi
 
-# 6. Abrir navegador en segundo plano tras arrancar
-(sleep 2 && (open http://localhost:8765 2>/dev/null || xdg-open http://localhost:8765 2>/dev/null || true)) &
+# 6. Abrir navegador en segundo plano tras arrancar (con cache-bust para ver la versión nueva)
+CACHE_BUST=$(date +%Y%m%d%H%M)
+(sleep 2 && (open "http://localhost:8765?v=${CACHE_BUST}" 2>/dev/null || xdg-open "http://localhost:8765?v=${CACHE_BUST}" 2>/dev/null || true)) &
 
 # 7. Ejecutar Monocrom
 uv run opc ui --port 8765

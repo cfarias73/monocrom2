@@ -279,6 +279,21 @@ def _make_update_apply_handler(engine: OPCEngine):
         repo_root = Path(__file__).resolve().parents[3]
         logs = []
 
+        # 0. Record sha before pull
+        sha_before = ""
+        try:
+            p = await asyncio.create_subprocess_exec(
+                "git", "rev-parse", "HEAD",
+                cwd=str(repo_root),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            so, _ = await p.communicate()
+            if p.returncode == 0:
+                sha_before = so.decode().strip()[:7]
+        except Exception:
+            pass
+
         # 1. git pull origin main
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -319,14 +334,35 @@ def _make_update_apply_handler(engine: OPCEngine):
         except Exception:
             pass
 
+        # 3. Get new sha after pull
+        sha_after = ""
+        try:
+            p2 = await asyncio.create_subprocess_exec(
+                "git", "rev-parse", "HEAD",
+                cwd=str(repo_root),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            so2, _ = await p2.communicate()
+            if p2.returncode == 0:
+                sha_after = so2.decode().strip()[:7]
+        except Exception:
+            pass
+
+        changed = sha_before != sha_after
+
         return aiohttp.web.json_response({
             "success": True,
             "message": "MonoCrom se actualizó correctamente.",
             "log": "\n".join(logs),
+            "sha_before": sha_before,
+            "sha_after": sha_after,
+            "code_changed": changed,
             "need_restart": True,
         })
 
     return _handler
+
 
 # ── Business Canvas config helpers ────────────────────────────────────────
 

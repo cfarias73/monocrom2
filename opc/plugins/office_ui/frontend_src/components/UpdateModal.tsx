@@ -26,6 +26,7 @@ export function UpdateModal({ isOpen, onClose, initialInfo, onUpdateCompleted }:
   const [updating, setUpdating] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'in_progress' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [updateResult, setUpdateResult] = useState<{sha_after?: string; code_changed?: boolean} | null>(null)
 
   const checkUpdates = useCallback(async () => {
     setChecking(true)
@@ -77,6 +78,7 @@ export function UpdateModal({ isOpen, onClose, initialInfo, onUpdateCompleted }:
       })
       const data = await res.json()
       if (res.ok && data.success) {
+        setUpdateResult({ sha_after: data.sha_after, code_changed: data.code_changed })
         setUpdateStatus('success')
         if (onUpdateCompleted) onUpdateCompleted()
       } else {
@@ -162,9 +164,16 @@ export function UpdateModal({ isOpen, onClose, initialInfo, onUpdateCompleted }:
             <div className="update-success-card">
               <div className="update-success-title">
                 <span>🎉</span> ¡MonoCrom se ha actualizado con éxito!
+                {updateResult?.sha_after && <code style={{marginLeft: 6, fontSize: '0.78rem', opacity: 0.75}}>({updateResult.sha_after})</code>}
               </div>
               <div className="update-success-desc">
-                La nueva versión ya está instalada. Para que todos los cambios en el motor y agentes tomen efecto completo, <b>reinicia tu servidor MonoCrom</b> (cierra la terminal y vuelve a abrir tu acceso directo).
+                <b>Pasos para ver la nueva versión:</b>
+                <ol style={{margin: '8px 0 0', paddingLeft: 18, lineHeight: 1.7}}>
+                  <li>Presiona el botón <b>Recargar Interfaz</b> de abajo.</li>
+                  {updateResult?.code_changed && (
+                    <li>Si los agentes se comportan igual de antes, <b>cierra la terminal y vuelve a abrir el acceso directo</b> de MonoCrom.</li>
+                  )}
+                </ol>
               </div>
             </div>
           )}
@@ -181,7 +190,10 @@ export function UpdateModal({ isOpen, onClose, initialInfo, onUpdateCompleted }:
           {updateStatus === 'success' ? (
             <button
               className="update-btn-action"
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                const cb = Date.now()
+                window.location.href = `/?v=${cb}`
+              }}
             >
               🔄 Recargar Interfaz
             </button>

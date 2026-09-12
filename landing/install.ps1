@@ -10,14 +10,51 @@ Write-Host ""
 
 $InstallDir = "$HOME\Monocrom"
 
+# Helper: refrescar PATH desde el registro de Windows (captura instalaciones recientes)
+function Refresh-EnvPath {
+    $MachinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+    $UserPath    = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    $env:Path    = "$MachinePath;$UserPath;$HOME\.cargo\bin;$HOME\.local\bin"
+}
+
 # 1. Comprobar o Instalar uv
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "⚡ Instalando runtime 'uv' para Windows..." -ForegroundColor Cyan
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-    $env:Path = "$HOME\.cargo\bin;$HOME\.local\bin;$env:Path"
+    Refresh-EnvPath
 }
 
-# 2. Descargar o actualizar repositorio (compatible con o sin Git)
+# 2. Comprobar o Instalar Node.js (requerido para compilar la interfaz de MonoCrom)
+Refresh-EnvPath
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host "📦 Node.js no encontrado. Instalando Node.js LTS..." -ForegroundColor Cyan
+    $NodeInstaller = "$env:TEMP\node_installer.msi"
+    # URL del instalador LTS de Node.js para Windows 64-bit
+    $NodeUrl = "https://nodejs.org/dist/v20.19.0/node-v20.19.0-x64.msi"
+    Write-Host "   Descargando Node.js desde nodejs.org (~30 MB)..." -ForegroundColor Gray
+    Invoke-WebRequest -Uri $NodeUrl -OutFile $NodeInstaller -UseBasicParsing
+    Write-Host "   Instalando Node.js (puede tardar un momento)..." -ForegroundColor Gray
+    Start-Process msiexec.exe -ArgumentList "/i `"$NodeInstaller`" /quiet /norestart ADDLOCAL=ALL" -Wait
+    Remove-Item $NodeInstaller -Force -ErrorAction SilentlyContinue
+    # Refrescar PATH para incluir Node recién instalado
+    Refresh-EnvPath
+    Write-Host "✅ Node.js instalado correctamente." -ForegroundColor Green
+} else {
+    $NodeVer = (node --version 2>$null)
+    Write-Host "✅ Node.js detectado: $NodeVer" -ForegroundColor Green
+}
+
+# Verificar que npm esté disponible antes de continuar
+Refresh-EnvPath
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host ""
+    Write-Host "⚠️  npm no se pudo activar en esta sesión." -ForegroundColor Yellow
+    Write-Host "   Cierra y vuelve a abrir PowerShell como Administrador y ejecuta:" -ForegroundColor Yellow
+    Write-Host "   irm https://monocrom.carlosfarias73.workers.dev/install.ps1 | iex" -ForegroundColor White
+    exit 1
+}
+
+# 3. Descargar o actualizar repositorio (compatible con o sin Git)
 if (Test-Path $InstallDir) {
     Write-Host "🔄 Actualizando Monocrom en $InstallDir..." -ForegroundColor Cyan
     Set-Location $InstallDir
@@ -33,43 +70,49 @@ if (Test-Path $InstallDir) {
         $ZipUrl = "https://github.com/cfarias73/monocrom2/archive/refs/heads/main.zip"
         $TempZip = "$env:TEMP\monocrom_installer.zip"
         $TempExtract = "$env:TEMP\monocrom_extracted"
-        
+
         if (Test-Path $TempExtract) { Remove-Item $TempExtract -Recurse -Force -ErrorAction SilentlyContinue }
-        
+
         Invoke-WebRequest -Uri $ZipUrl -OutFile $TempZip -UseBasicParsing
         Expand-Archive -Path $TempZip -DestinationPath $TempExtract -Force
-        
+
         $ExtractedFolder = Get-ChildItem -Path $TempExtract | Select-Object -First 1
         if ($ExtractedFolder) {
             Move-Item -Path $ExtractedFolder.FullName -Destination $InstallDir -Force
         }
-        
+
         Remove-Item -Path $TempZip -Force -ErrorAction SilentlyContinue
         Remove-Item -Path $TempExtract -Recurse -Force -ErrorAction SilentlyContinue
     }
     Set-Location $InstallDir
 }
 
-# 3. Confiar en el espacio de trabajo
+# 4. Confiar en el espacio de trabajo
 Write-Host "🔒 Configurando espacio de trabajo local..." -ForegroundColor Cyan
 uv run opc trust add $InstallDir
 
-# 4. Instalar motor de navegación web Playwright (Chromium)
+# 5. Instalar motor de navegación web Playwright (Chromium) — OPCIONAL
 Write-Host "🌐 Verificando motor de navegación web (Playwright Chromium)..." -ForegroundColor Cyan
 try {
-    uv run playwright install chromium
+    $playwrightResult = & uv run playwright install chromium 2>&1
+    Write-Host "✅ Playwright Chromium instalado correctamente." -ForegroundColor Green
 } catch {
-    Write-Host "Aviso: la instalación de Chromium continuará en segundo plano." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "⚠️  Playwright (navegación web autónoma) no pudo instalarse." -ForegroundColor Yellow
+    Write-Host "   Causa posible: política de seguridad corporativa (AppLocker/WDAC)." -ForegroundColor DarkGray
+    Write-Host "   MonoCrom funcionará normalmente. Solo la herramienta 'navegar web'" -ForegroundColor DarkGray
+    Write-Host "   quedará desactivada hasta que un administrador lo permita." -ForegroundColor DarkGray
+    Write-Host ""
 }
 
-# 5. Crear acceso directo en el Escritorio
+# 6. Crear acceso directo en el Escritorio
 try {
     $WshShell = New-Object -ComObject WScript.Shell
     $DesktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
-    
+
     $BatPath = "$InstallDir\Iniciar_MonoCrom.bat"
     Set-Content -Path $BatPath -Value "@echo off`ntitle MonoCrom Console`ncd /d `"%USERPROFILE%\Monocrom`"`nstart http://localhost:8765`nuv run opc ui --port 8765`npause"
-    
+
     $ShortcutPath = "$DesktopPath\MonoCrom.lnk"
     $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
     $Shortcut.TargetPath = "$InstallDir\Iniciar_MonoCrom.bat"
@@ -86,13 +129,14 @@ Write-Host "✅ ¡Instalación completada con éxito!" -ForegroundColor Green
 Write-Host "🚀 Iniciando Monocrom en http://localhost:8765..." -ForegroundColor Cyan
 Write-Host ""
 
-# 6. Abrir navegador en segundo plano tras inicializar el servidor
+# 7. Abrir navegador en segundo plano tras inicializar el servidor
+#    Usamos ?v= para forzar recarga limpia de la interfaz tras actualizaciones
+$CacheBust = Get-Date -Format "yyyyMMddHHmm"
 Start-Job -ScriptBlock {
-    Start-Sleep -Seconds 4
-    Start-Process "http://localhost:8765"
-} | Out-Null
+    param($cb)
+    Start-Sleep -Seconds 5
+    Start-Process "http://localhost:8765?v=$cb"
+} -ArgumentList $CacheBust | Out-Null
 
-# 7. Ejecutar Monocrom
+# 8. Ejecutar Monocrom
 uv run opc ui --port 8765
-
-
