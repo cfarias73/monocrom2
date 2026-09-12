@@ -35,6 +35,7 @@ import { isJiuwenOpaqueTeam } from './lib/externalTeamActivity'
 import { AuthProvider } from './context/AuthContext'
 import { AuthGate } from './components/AuthGate'
 import { UserAccountPill } from './components/UserAccountPill'
+import { HelpWidget } from './components/HelpWidget'
 
 function readOutdoorOverrideUi(): 'auto' | 'day' | 'night' {
   try {
@@ -2894,6 +2895,7 @@ export default function App() {
       <AuthGate>
         <AppInner />
       </AuthGate>
+      <HelpWidget />
     </AuthProvider>
   )
 }

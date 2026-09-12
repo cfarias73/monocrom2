@@ -178,6 +178,9 @@ async def create_app(
         _make_attachment_handler(engine),
     )
 
+    # Mono — Help assistant widget
+    app.router.add_post("/api/help", _make_help_handler(engine))
+
     # SPA: serve static files, fallback to index.html
     if _STATIC_DIR.is_dir():
         app.router.add_get("/", _serve_index)
@@ -195,6 +198,125 @@ async def create_app(
 
 
 # ── Route handlers ────────────────────────────────────────────────────
+
+_HELP_SYSTEM_PROMPT = """\
+Eres **Mono**, el asistente experto oficial de MonoCrom. Respondes SOLO preguntas sobre MonoCrom.
+Si el usuario pregunta algo fuera de MonoCrom, redirige amablemente a temas de la plataforma.
+
+## ¿Qué es MonoCrom?
+MonoCrom es un sistema de orquestación multi-agente local (100% en tu computadora). Permite que
+una persona (el Director) dirija un equipo de agentes de IA especializados que colaboran en proyectos.
+
+## Interfaz — 3 áreas principales
+- **Workspace (Espacio de Trabajo):** Chat compositor + flujo de ejecución en vivo + tablero Kanban.
+- **Office (Oficina Virtual):** Vista 2D animada de los agentes trabajando en sus escritorios.
+- **Org (Organización):** Organigrama, crear/editar roles, gestión de agentes.
+
+## Modos de operación
+- **Modo Tarea (Single Agent):** Un solo agente experto ejecuta la tarea. Ideal para consultas rápidas.
+- **Modo Empresa (Multi-Agente):** El Director coordina múltiples agentes especializados en paralelo.
+
+## Configuración de API / Modelos
+1. Clic en ⚙️ Ajustes (esquina superior derecha).
+2. Pegar la API Key del proveedor elegido.
+3. Seleccionar el modelo: `openai/gpt-4o`, `anthropic/claude-3-7-sonnet-latest`,
+   `deepseek/deepseek-chat`, `ollama/llama3.3`, `gemini/gemini-2.5-pro`, etc.
+4. Ajustar temperatura y guardar.
+
+## Adjuntar archivos
+- Soporta: imágenes, PDFs, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), CSV, texto, código.
+- Límite: 50 MB por archivo, 100 MB total por mensaje.
+- Arrastra el archivo al chat o usa el botón 📎.
+- El agente lee el contenido automáticamente (no el archivo crudo, sino su texto extraído).
+
+## Actualizar MonoCrom
+- **Windows:** Abrir PowerShell como Admin → `irm https://monocrom.carlosfarias73.workers.dev/install.ps1 | iex`
+- **Mac:** `cd ~/Monocrom && git pull && uv run opc ui --port 8765`
+- Los datos personales (.opc/) nunca se borran en las actualizaciones.
+
+## Carpetas importantes
+- `~/Monocrom/` — Código de la aplicación (se actualiza con git pull).
+- `~/Monocrom/.opc/` — Tus datos: conversaciones, agentes, configs. Nunca se toca.
+- `~/Monocrom/.opc/config/` — Configuración de API keys y modelos.
+
+## Solución de problemas comunes
+- **"npm not found"**: Node.js no está instalado o no está en PATH. Reinstala con el comando del instalador.
+- **"ERR_CONNECTION_REFUSED"**: El servidor no está corriendo. Haz doble clic en el ícono MonoCrom del escritorio.
+- **Archivo "muy grande"**: Límite es 50 MB. Si es mayor, considera dividirlo.
+- **El agente no lee el archivo**: Escríbele explícitamente: "Tienes el contenido del archivo en tu contexto, úsalo".
+- **Quiero cambiar de modelo**: ⚙️ Ajustes → cambiar modelo → Guardar.
+- **Mac Intel (x86_64)**: Ya está soportado. Si hay problemas con onnxruntime, el instalador lo resuelve solo.
+
+## Buenas prácticas
+- Sé específico en las instrucciones ("Crea un script Python que..." en vez de "ayúdame con Python").
+- Usa **Modo Empresa** para proyectos complejos con múltiples archivos.
+- Crea proyectos separados para cada cliente o área de trabajo.
+- Supervisa el Kanban — si una tarea pide aprobación, aparece en el chat.
+
+Responde siempre en el mismo idioma que el usuario (español o inglés). Sé conciso, amigable y práctico.
+Usa markdown básico: **negrita**, `código`, listas con -.
+"""
+
+
+def _make_help_handler(engine: OPCEngine):
+    """Factory: returns the POST /api/help handler for Mono, the MonoCrom assistant."""
+
+    async def _handle_help(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        try:
+            body = await request.json()
+        except Exception:
+            return aiohttp.web.Response(status=400, text="Invalid JSON")
+
+        history: list[dict] = body.get("history", [])
+        if not isinstance(history, list) or not history:
+            return aiohttp.web.Response(status=400, text="history required")
+
+        # Build messages for the LLM
+        messages = [{"role": "system", "content": _HELP_SYSTEM_PROMPT}]
+        for turn in history[-20:]:  # keep last 20 turns to stay within context
+            role = str(turn.get("role", ""))
+            content = str(turn.get("content", "")).strip()
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+
+        if not any(m["role"] == "user" for m in messages):
+            return aiohttp.web.Response(status=400, text="No user message")
+
+        try:
+            import litellm  # type: ignore
+            from opc.core.config import get_opc_home
+            from opc.llm.config import load_llm_config
+
+            opc_home = getattr(engine, "opc_home", None) or get_opc_home()
+            llm_cfg = load_llm_config(opc_home)
+            model = llm_cfg.default_model or "openai/gpt-4o"
+            api_key = llm_cfg.api_key or None
+            api_base = llm_cfg.api_base or None
+
+            kwargs: dict[str, Any] = dict(
+                model=model,
+                messages=messages,
+                max_tokens=800,
+                temperature=0.5,
+            )
+            if api_key:
+                kwargs["api_key"] = api_key
+            if api_base:
+                kwargs["api_base"] = api_base
+
+            response = await litellm.acompletion(**kwargs)
+            reply = response.choices[0].message.content or ""
+        except Exception as exc:
+            logger.warning(f"Help endpoint LLM error: {exc}")
+            reply = (
+                "⚠️ No pude generar una respuesta en este momento. "
+                "Verifica que tengas configurada una API key válida en ⚙️ Ajustes."
+            )
+
+        return aiohttp.web.json_response({"reply": reply})
+
+    return _handle_help
+
 
 async def _serve_index(request: aiohttp.web.Request) -> aiohttp.web.FileResponse:
     return aiohttp.web.FileResponse(_STATIC_DIR / "index.html", headers=_FRONTEND_NO_STORE_HEADERS)
