@@ -19,6 +19,7 @@ import aiohttp.web
 import aiosqlite
 from loguru import logger
 
+from opc import __version__
 from opc.core.config import OPCConfig, get_opc_home
 from opc.core.file_lock import lock_file_descriptor
 from opc.core.workspace_trust import WorkspaceTrustRequired
@@ -261,6 +262,7 @@ def _make_update_check_handler(engine: OPCEngine):
 
         return aiohttp.web.json_response({
             "success": True,
+            "version": __version__,
             "update_available": update_available,
             "current_sha": local_sha[:7] if local_sha else "desconocido",
             "repo_url": "https://github.com/cfarias73/monocrom2",

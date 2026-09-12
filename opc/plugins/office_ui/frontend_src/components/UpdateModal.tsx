@@ -3,6 +3,7 @@ import './UpdateModal.css'
 
 export interface UpdateInfo {
   success: boolean
+  version?: string
   update_available: boolean
   current_sha: string
   latest_sha?: string
@@ -115,7 +116,9 @@ export function UpdateModal({ isOpen, onClose, initialInfo, onUpdateCompleted }:
           <div className="update-version-card">
             <div className="update-version-col">
               <span className="update-version-label">Versión Local</span>
-              <span className="update-version-val">{info?.current_sha || '...'}</span>
+              <span className="update-version-val">
+                {info?.version ? `v${info.version}` : ''} {info?.current_sha ? `(${info.current_sha})` : '...'}
+              </span>
             </div>
             {info && (
               <span className={`update-badge-status ${info.update_available ? 'available' : 'latest'}`}>

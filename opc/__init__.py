@@ -8,4 +8,4 @@ from opc.core.windows_ssl import sanitize_windows_sslkeylogfile
 # clients (aiohttp, litellm/httpx, etc.) does not trigger OpenSSL crashes.
 sanitize_windows_sslkeylogfile()
 
-__version__ = "0.1.0"
+__version__ = "2.1.0"
