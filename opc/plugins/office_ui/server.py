@@ -187,6 +187,10 @@ async def create_app(
     app.router.add_get("/api/config/jobs", _make_config_get_handler(engine, "job_descriptions.json"))
     app.router.add_post("/api/config/jobs", _make_config_post_handler(engine, "job_descriptions.json"))
 
+    # System Update Endpoints
+    app.router.add_get("/api/update/check", _make_update_check_handler(engine))
+    app.router.add_post("/api/update/apply", _make_update_apply_handler(engine))
+
     # SPA: serve static files, fallback to index.html
     if _STATIC_DIR.is_dir():
         app.router.add_get("/", _serve_index)
@@ -204,6 +208,123 @@ async def create_app(
 
 
 # ── Route handlers ────────────────────────────────────────────────────
+
+# ── Update endpoints ──────────────────────────────────────────────────
+
+def _make_update_check_handler(engine: OPCEngine):
+    """GET /api/update/check: checks if a newer version exists on GitHub."""
+
+    async def _handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        repo_root = Path(__file__).resolve().parents[3]
+        local_sha = ""
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "git", "rev-parse", "HEAD",
+                cwd=str(repo_root),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, _ = await proc.communicate()
+            if proc.returncode == 0:
+                local_sha = stdout.decode().strip()
+        except Exception:
+            pass
+
+        # Check remote commit via GitHub API
+        remote_info = {}
+        try:
+            timeout = aiohttp.ClientTimeout(total=8)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                headers = {"User-Agent": "MonoCrom-UpdateChecker"}
+                async with session.get(
+                    "https://api.github.com/repos/cfarias73/monocrom2/commits/main",
+                    headers=headers,
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        remote_sha = data.get("sha", "")
+                        commit_info = data.get("commit", {})
+                        remote_info = {
+                            "latest_sha": remote_sha[:7] if remote_sha else "",
+                            "latest_full_sha": remote_sha,
+                            "latest_message": commit_info.get("message", ""),
+                            "latest_date": commit_info.get("author", {}).get("date", ""),
+                            "latest_author": commit_info.get("author", {}).get("name", ""),
+                        }
+        except Exception as exc:
+            logger.debug(f"Update check network error: {exc}")
+
+        latest_full_sha = remote_info.get("latest_full_sha", "")
+        update_available = False
+        if local_sha and latest_full_sha:
+            update_available = not local_sha.startswith(latest_full_sha[:7]) and not latest_full_sha.startswith(local_sha[:7])
+
+        return aiohttp.web.json_response({
+            "success": True,
+            "update_available": update_available,
+            "current_sha": local_sha[:7] if local_sha else "desconocido",
+            "repo_url": "https://github.com/cfarias73/monocrom2",
+            **remote_info,
+        })
+
+    return _handler
+
+
+def _make_update_apply_handler(engine: OPCEngine):
+    """POST /api/update/apply: pulls latest changes and updates dependencies."""
+
+    async def _handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        repo_root = Path(__file__).resolve().parents[3]
+        logs = []
+
+        # 1. git pull origin main
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "git", "pull", "origin", "main",
+                cwd=str(repo_root),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await proc.communicate()
+            out_str = stdout.decode().strip()
+            err_str = stderr.decode().strip()
+            if proc.returncode != 0:
+                logger.error(f"Git pull failed: {err_str}")
+                return aiohttp.web.json_response({
+                    "success": False,
+                    "error": f"Error en git pull: {err_str or out_str}",
+                    "log": out_str,
+                }, status=500)
+            logs.append(f"Git pull: {out_str}")
+        except Exception as exc:
+            logger.error(f"Git pull exception: {exc}")
+            return aiohttp.web.json_response({
+                "success": False,
+                "error": str(exc),
+            }, status=500)
+
+        # 2. uv sync (if available)
+        try:
+            proc_uv = await asyncio.create_subprocess_exec(
+                "uv", "sync",
+                cwd=str(repo_root),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout_uv, _ = await proc_uv.communicate()
+            if proc_uv.returncode == 0:
+                logs.append("Dependencias sincronizadas con uv sync.")
+        except Exception:
+            pass
+
+        return aiohttp.web.json_response({
+            "success": True,
+            "message": "MonoCrom se actualizó correctamente.",
+            "log": "\n".join(logs),
+            "need_restart": True,
+        })
+
+    return _handler
 
 # ── Business Canvas config helpers ────────────────────────────────────────
 

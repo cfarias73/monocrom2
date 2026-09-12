@@ -5,6 +5,8 @@ interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   onSaved?: () => void
+  onOpenUpdate?: () => void
+  updateInfo?: any
 }
 
 interface LLMConfigResponse {
@@ -25,7 +27,7 @@ const POPULAR_MODELS = [
   { label: 'Ollama Local (Llama 3.3)', value: 'ollama/llama3.3', provider: 'ollama' },
 ]
 
-export function SettingsModal({ isOpen, onClose, onSaved }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, onSaved, onOpenUpdate, updateInfo }: SettingsModalProps) {
   const { t } = useI18n()
   const [model, setModel] = useState('openai/gpt-4o')
   const [apiKey, setApiKey] = useState('')
@@ -351,6 +353,47 @@ export function SettingsModal({ isOpen, onClose, onSaved }: SettingsModalProps) 
                   onChange={e => setTemperature(parseFloat(e.target.value))}
                   style={{ width: '100%', accentColor: '#ea580c', cursor: 'pointer' }}
                 />
+              </div>
+
+              {/* System Updates */}
+              <div style={{
+                background: '#1f1f23',
+                border: '1px solid #3f3f46',
+                borderRadius: 8,
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🚀</span> Actualizaciones de MonoCrom
+                  </div>
+                  <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 2 }}>
+                    {updateInfo?.update_available ? '¡Nueva versión disponible en GitHub!' : 'MonoCrom está en la versión más reciente.'}
+                  </div>
+                </div>
+                {onOpenUpdate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      onOpenUpdate()
+                    }}
+                    style={{
+                      background: updateInfo?.update_available ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' : '#27272a',
+                      color: '#ffffff',
+                      border: updateInfo?.update_available ? 'none' : '1px solid #3f3f46',
+                      borderRadius: 6,
+                      padding: '6px 12px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {updateInfo?.update_available ? '⚡ Actualizar' : '🔍 Comprobar'}
+                  </button>
+                )}
               </div>
 
               {/* Action buttons */}

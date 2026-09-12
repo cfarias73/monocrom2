@@ -37,6 +37,7 @@ import { AuthGate } from './components/AuthGate'
 import { UserAccountPill } from './components/UserAccountPill'
 import { HelpWidget } from './components/HelpWidget'
 import { BusinessPage } from './components/BusinessPage'
+import { UpdateModal, type UpdateInfo } from './components/UpdateModal'
 
 function readOutdoorOverrideUi(): 'auto' | 'day' | 'night' {
   try {
@@ -519,6 +520,8 @@ function AppInner() {
   const [activePage, setActivePage] = useState<AppPage>('workspace')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [showApiKeyBanner, setShowApiKeyBanner] = useState(false)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [updateModalOpen, setUpdateModalOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/config/llm')
@@ -529,6 +532,24 @@ function AppInner() {
         }
       })
       .catch(() => {})
+
+    const checkUpdates = async () => {
+      try {
+        const res = await fetch('/api/update/check')
+        if (res.ok) {
+          const data: UpdateInfo = await res.json()
+          setUpdateInfo(data)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    const timer = setTimeout(checkUpdates, 2000)
+    const interval = setInterval(checkUpdates, 10 * 60 * 1000)
+    return () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+    }
   }, [])
   const [swarmAgents, setSwarmAgents] = useState<AgentInfo[]>([])
   const [showDevTools, setShowDevTools] = useState(false)
@@ -2514,6 +2535,16 @@ function AppInner() {
               {t('language.english')}
             </button>
           </div>
+          {updateInfo?.update_available && (
+            <button
+              type="button"
+              className="topbar-update-badge"
+              onClick={() => setUpdateModalOpen(true)}
+              title="¡Nueva versión de MonoCrom disponible! Haz clic para actualizar."
+            >
+              <span>🚀</span> Actualización disponible
+            </button>
+          )}
           <button
             type="button"
             className="theme-select"
@@ -2892,6 +2923,16 @@ function AppInner() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onSaved={() => setShowApiKeyBanner(false)}
+        onOpenUpdate={() => setUpdateModalOpen(true)}
+        updateInfo={updateInfo}
+      />
+      <UpdateModal
+        isOpen={updateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+        initialInfo={updateInfo}
+        onUpdateCompleted={() => {
+          setUpdateInfo(prev => prev ? { ...prev, update_available: false } : null)
+        }}
       />
     </div>
   )
